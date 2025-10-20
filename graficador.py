@@ -7,3 +7,6 @@
 #para bajar cambios -> pull
 
 print ("Hola graficador")
+print("Wazaaaaaaaaa")
+#inetneoto
+print("HOLA ")
