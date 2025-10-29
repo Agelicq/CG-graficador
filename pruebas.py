@@ -1,14 +1,150 @@
 import pygame
 import os
-#archivo de prueba con la interfaz
-# Inicializar pygame
+import math  # ### NUEVO ### Importar math y numpy
+import numpy as np
+
+# --- Algoritmo Bresenham para líneas ---
+def bresenham(screen, x1, y1, x2, y2, color):
+    # (Tu código de bresenham... está un poco incompleto,
+    # le falta el último punto, lo corrijo)
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+
+    x, y = x1, y1
+    sx = 1 if x2 >= x1 else -1
+    sy = 1 if y2 >= y1 else -1
+
+    if dx > dy:
+        err = dx / 2.0
+        # Bucle debe correr dx + 1 veces para incluir el último punto
+        for _ in range(int(dx) + 1):
+            pygame.draw.circle(screen, color, (int(x), int(y)), 1)
+            err -= dy
+            if err < 0:
+                y += sy
+                err += dx
+            x += sx
+    else:
+        err = dy / 2.0
+        # Bucle debe correr dy + 1 veces
+        for _ in range(int(dy) + 1):
+            pygame.draw.circle(screen, color, (int(x), int(y)), 1)
+            err -= dx
+            if err < 0:
+                x += sx
+                err += dy
+            y += sy
+
+# Algoritmo DDA para líneas
+def dda(screen, x1, y1, x2, y2, color):
+    dx = x2 - x1
+    dy = y2 - y1
+    
+    steps = int(max(abs(dx), abs(dy)))
+    # Evitar división por cero si los puntos son iguales
+    if steps == 0:
+        pygame.draw.circle(screen, color, (round(x1), round(y1)), 1)
+        return
+
+    x_inc = dx / steps
+    y_inc = dy / steps
+    x, y = float(x1), float(y1)
+    
+    # +1 para incluir el último punto
+    for _ in range(steps + 1):
+        pygame.draw.circle(screen, color, (round(x), round(y)), 1)
+        x += x_inc
+        y += y_inc
+        
+# --- Algoritmo Bresenham para circulos ---
+def bresenham_circle(screen, cx, cy, r, color):
+    # (Tu código de bresenham_circle va aquí...)
+    x = 0
+    y = r
+    d = 3 - 2 * r
+    def plot_circle_points(x, y):
+        points = [
+            (cx + x, cy + y), (cx - x, cy + y),
+            (cx + x, cy - y), (cx - x, cy - y),
+            (cx + y, cy + x), (cx - y, cy + x),
+            (cx + y, cy - x), (cx - y, cy - x)
+        ]
+        for point in points:
+            pygame.draw.circle(screen, color, point, 1)
+
+    while x <= y: 
+        plot_circle_points(x, y)
+        if d < 0:
+            d += 4 * x + 6
+        else:
+            d += 4 * (x - y) + 10
+            y -= 1
+        x += 1
+
+# Algoritmo de Bézier 
+def bezier(screen, p0, p1, p2, p3, steps, color):
+    # (Tu código de bezier va aquí...)
+    t_values = np.linspace(0, 1, steps)
+    points = []
+    for t in t_values:
+        x = (1-t)**3 * p0[0] + 3 * (1-t)**2 * t * p1[0] + 3 * (1-t) * t**2 * p2[0] + t**3 * p3[0]
+        y = (1-t)**3 * p0[1] + 3 * (1-t)**2 * t * p1[1] + 3 * (1-t) * t**2 * p2[1] + t**3 * p3[1]
+        points.append((int(x), int(y)))
+    if len(points) > 1:
+        pygame.draw.lines(screen, color, False, points, 2)
+        
+#Triangulos y Poligonos
+def draw_triangle(screen, vertices, color):
+    # (Tu código de draw_triangle va aquí...)
+    if len(vertices) != 3: return
+    draw_polygon(screen, vertices, color)
+        
+def draw_polygon(screen, vertices, color):
+    # (Tu código de draw_polygon va aquí...)
+    if len(vertices) < 2: return
+    for i in range(len(vertices)):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[(i + 1) % len(vertices)]
+        dda(screen, x1, y1, x2, y2, color)
+        
+#Rectangulos
+def draw_rectangle(screen, x, y, width, height, color):
+    # (Tu código de draw_rectangle va aquí...)
+    vertices = [
+        (x, y), (x + width, y),
+        (x + width, y + height), (x, y + height)
+    ]
+    draw_polygon(screen, vertices, color)
+
+#Elipsis
+def draw_ellipse(screen, cx, cy, rx, ry, color):
+    # (Tu código de draw_ellipse va aquí...)
+    t_values = np.linspace(0, 2 * math.pi, 100)
+    points = []
+    for t in t_values:
+        x = cx + rx * math.cos(t)
+        y = cy + ry * math.sin(t)
+        points.append((int(x), int(y)))
+    if len(points) > 1:
+        # True para cerrar la elipse
+        pygame.draw.lines(screen, color, True, points, 2)
+
+# --- Fin de Algoritmos ---
+
 pygame.init()
 
 # Colores para panel y borde
 PANEL_BG = (99, 99, 99)
 PANEL_BORDER = (0, 0, 0)
 PANEL_FBG = (234, 219, 255)
-
+#- Colores para dibujar
+COLOR_AZUL = (0, 120, 250)
+COLOR_VERDE = (50, 200, 50)
+COLOR_ROJO = (200, 50, 50)
+COLOR_MORADO = (100, 50, 200)
+COLOR_AMARILLO = (200, 200, 50)
+COLOR_BLANCO = (255, 255, 255)
+COLOR_NEGRO = (0, 0, 0)
 # Clase Boton
 class Boton:
    def __init__(self, x, y, ancho, alto, texto, color_normal, color_hover, color_texto=(0, 0, 0), fuente=None, icon_surface=None):
@@ -64,14 +200,30 @@ if __name__ == "__main__":
    pygame.display.set_caption("Ejemplo de Botones con POO y Pygame")
    reloj = pygame.time.Clock()
 
+   # ### NUEVO ### - Definir paneles y ÁREA DE DIBUJO
+   panel_form_rect = pygame.Rect(20, 20, 140, 650)
+   panel_color_rect = pygame.Rect(850, 20, 130, 650)
+   
+   # El área de dibujo es el espacio entre los paneles
+   drawable_x = panel_form_rect.right + 10
+   drawable_y = panel_form_rect.top
+   drawable_w = panel_color_rect.left - drawable_x - 10
+   drawable_h = panel_form_rect.height
+   drawable_rect = pygame.Rect(drawable_x, drawable_y, drawable_w, drawable_h)   
+   
+   # - Crear el LIENZO para dibujar
+   # Usamos (237, 237, 237) que es tu color de fondo
+   lienzo_surface = pygame.Surface(drawable_rect.size)
+   lienzo_surface.fill((237, 237, 237))
+    
    # Crear botones de colores (columna)
-   boton_azul = Boton(890, 30, 50, 50, "", (0, 120, 250), (0, 180, 255))
-   boton_verde = Boton(890, 100, 50, 50, "", (50, 200, 50), (80, 255, 80))
-   boton_rojo = Boton(890, 170, 50, 50, "", (200, 50, 50), (255, 80, 80))
-   boton_morado = Boton(890, 240, 50, 50, "", (100, 50, 200), (150, 80, 255))
-   boton_amarillo = Boton(890, 310, 50, 50, "", (200, 200, 50), (255, 255, 80))
-   boton_blanco = Boton(890, 380, 50, 50, "", (255, 255, 255), (255, 255, 255))
-   boton_negro = Boton(890, 450, 50, 50, "", (0, 0, 0), (80, 80, 80))
+   boton_azul = Boton(890, 30, 50, 50, "", COLOR_AZUL, (0, 180, 255))
+   boton_verde = Boton(890, 100, 50, 50, "", COLOR_VERDE, (80, 255, 80))
+   boton_rojo = Boton(890, 170, 50, 50, "", COLOR_ROJO, (255, 80, 80))
+   boton_morado = Boton(890, 240, 50, 50, "", COLOR_MORADO, (150, 80, 255))
+   boton_amarillo = Boton(890, 310, 50, 50, "", COLOR_AMARILLO, (255, 255, 80))
+   boton_blanco = Boton(890, 380, 50, 50, "", COLOR_BLANCO, (200, 200, 200)) # hover gris claro
+   boton_negro = Boton(890, 450, 50, 50, "", COLOR_NEGRO, (80, 80, 80))
 
    # Agrupar botones para calcular el área de fondo automáticamente
    botones_columna = [boton_azul, boton_verde, boton_rojo, boton_morado, boton_amarillo, boton_blanco, boton_negro]
@@ -207,61 +359,120 @@ if __name__ == "__main__":
    boton_limpiar = Boton(865, 580, 100, 50, "LIMPIAR", PANEL_FBG, PANEL_FBG)
 
    botones_formas = [boton_linea, boton_curva, boton_rect, boton_circ, boton_tri, boton_elipse, boton_poligono, boton_limpiar]
-
+# - Variables de Estado
+   current_tool = None
+   current_color = COLOR_NEGRO # Color por defecto
+   points = [] # Lista para guardar los clics del usuario
 
    ejecutando = True
    while ejecutando:
       eventos = pygame.event.get()
       for evento in eventos:
-         if evento.type == pygame.QUIT:
-            ejecutando = False
+            if evento.type == pygame.QUIT:
+                ejecutando = False
+            
+            # ### NUEVO ### - Lógica de CLICS EN EL LIENZO
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                pos_pantalla = evento.pos
+                
+                # Comprobar si el clic fue DENTRO del área de dibujo
+                if drawable_rect.collidepoint(pos_pantalla):
+                    # Convertir coordenadas de pantalla a coordenadas de LIENZO
+                    pos_lienzo = (pos_pantalla[0] - drawable_rect.x,
+                                  pos_pantalla[1] - drawable_rect.y)
+                    
+                    points.append(pos_lienzo)
+                    
+                    # Dibujar un punto de feedback
+                    pygame.draw.circle(lienzo_surface, current_color, pos_lienzo, 3)
+                    
+                    # --- LÓGICA DE DIBUJO SEGÚN HERRAMIENTA ---
+                    
+                    if current_tool == 'LINEA' and len(points) == 2:
+                        dda(lienzo_surface, *points[0], *points[1], current_color)
+                        points = [] # Reiniciar puntos
+                    
+                    elif current_tool == 'CIRCULO' and len(points) == 2:
+                        cx, cy = points[0]
+                        px, py = points[1]
+                        radius = int(((px - cx)**2 + (py - cy)**2) ** 0.5)
+                        if radius > 0:
+                            bresenham_circle(lienzo_surface, cx, cy, radius, current_color)
+                        points = []
+                    
+                    elif current_tool == 'RECTANGULO' and len(points) == 2:
+                        x1, y1 = points[0]
+                        x2, y2 = points[1]
+                        width = abs(x2 - x1)
+                        height = abs(y2 - y1)
+                        rect_x = min(x1, x2)
+                        rect_y = min(y1, y2)
+                        draw_rectangle(lienzo_surface, rect_x, rect_y, width, height, current_color)
+                        points = []
 
-      # Actualizar botones
-      if boton_azul.actualizar(eventos):
-         print("Has hecho clic en AZUL 🎮")
+                    elif current_tool == 'TRIANGULO' and len(points) == 3:
+                        draw_triangle(lienzo_surface, points, current_color)
+                        points = []
+                        
+                    elif current_tool == 'BEZIER' and len(points) == 4:
+                        bezier(lienzo_surface, *points, 100, current_color)
+                        points = []
+                    
+                    elif current_tool == 'ELIPSE' and len(points) == 2:
+                        cx, cy = points[0]
+                        px, py = points[1]
+                        rx = abs(px - cx)
+                        ry = abs(py - cy)
+                        if rx > 0 and ry > 0:
+                            draw_ellipse(lienzo_surface, cx, cy, rx, ry, current_color)
+                        points = []
 
-      if boton_rojo.actualizar(eventos):
-         print("Has hecho clic en ROJO 🎮")
+                    elif current_tool == 'POLIGONO':
+                        # Lógica simple: 5 puntos para un pentágono
+                        if len(points) == 5:
+                            draw_polygon(lienzo_surface, points, current_color)
+                            points = []
 
-      if boton_verde.actualizar(eventos):
-         print("Has hecho clic en VERDE 🎮")
 
-      if boton_morado.actualizar(eventos):
-         print("Has hecho clic en MORADO 🎮")
+        # --- Actualizar botones de COLOR ---
+        # ### MODIFICADO ### - Actualiza el estado en lugar de imprimir
+      if boton_azul.actualizar(eventos): current_color = COLOR_AZUL
+      if boton_verde.actualizar(eventos): current_color = COLOR_VERDE
+      if boton_rojo.actualizar(eventos): current_color = COLOR_ROJO
+      if boton_morado.actualizar(eventos): current_color = COLOR_MORADO
+      if boton_amarillo.actualizar(eventos): current_color = COLOR_AMARILLO
+      if boton_blanco.actualizar(eventos): current_color = COLOR_BLANCO
+      if boton_negro.actualizar(eventos): current_color = COLOR_NEGRO
 
-      if boton_amarillo.actualizar(eventos):
-         print("Has hecho clic en AMARILLO 🎮")
-
-      if boton_blanco.actualizar(eventos):
-         print("Has hecho clic en BLANCO 🎮")
-
-      if boton_negro.actualizar(eventos):
-         print("Has hecho clic en NEGRO 🎮")
-
-      if boton_linea.actualizar(eventos):
-         print("Has hecho clic en LINEA 🎮")
-
-      if boton_rect.actualizar(eventos):
-         print("Has hecho clic en RECTANGULO 🎮")
-
-      if boton_circ.actualizar(eventos):
-         print("Has hecho clic en CIRCULO 🎮")
-
-      if boton_tri.actualizar(eventos):
-         print("Has hecho clic en TRIANGULO 🎮")
+      # --- Actualizar botones de FORMA ---
+      # ### MODIFICADO ### - Actualiza el estado y resetea los puntos
+      if boton_linea.actualizar(eventos): current_tool = 'LINEA'; points = []
+      if boton_rect.actualizar(eventos): current_tool = 'RECTANGULO'; points = []
+      if boton_circ.actualizar(eventos): current_tool = 'CIRCULO'; points = []
+      if boton_tri.actualizar(eventos): current_tool = 'TRIANGULO'; points = []
+      if boton_curva.actualizar(eventos): current_tool = 'BEZIER'; points = []
+      if boton_elipse.actualizar(eventos): current_tool = 'ELIPSE'; points = []
+      if boton_poligono.actualizar(eventos): current_tool = 'POLIGONO'; points = []
+        
+      # --- Botón LIMPIAR ---
+      if boton_limpiar.actualizar(eventos):
+            lienzo_surface.fill((237, 237, 237)) # Limpia el lienzo
+            points = []
 
       # Dibujar fondo y botones
       pantalla.fill((237, 237, 237))
 
-      panel_rect = pygame.Rect(850, 20, 130, 650)
-      panel_form = pygame.Rect(20, 20, 140, 650)
+      # 2. ### NUEVO ### - Dibujar el LIENZO en la pantalla
+      pantalla.blit(lienzo_surface, drawable_rect.topleft)
+      # (Opcional) Dibujar un borde alrededor del lienzo
+      pygame.draw.rect(pantalla, PANEL_BORDER, drawable_rect, width=2, border_radius=5)
 
-      # Fondo del panel y borde (border separate color)
-      pygame.draw.rect(pantalla, PANEL_BG, panel_rect, border_radius=12)
-      pygame.draw.rect(pantalla, PANEL_BORDER, panel_rect, width=3, border_radius=12)
+      # 3. Dibujar los PANELES
+      pygame.draw.rect(pantalla, PANEL_BG, panel_color_rect, border_radius=12)
+      pygame.draw.rect(pantalla, PANEL_BORDER, panel_color_rect, width=3, border_radius=12)
 
-      pygame.draw.rect(pantalla, PANEL_BG, panel_form, border_radius=12)
-      pygame.draw.rect(pantalla, PANEL_BORDER, panel_form, width=3, border_radius=12)
+      pygame.draw.rect(pantalla, PANEL_BG, panel_form_rect, border_radius=12)
+      pygame.draw.rect(pantalla, PANEL_BORDER, panel_form_rect, width=3, border_radius=12)
 
       # Dibujar botones encima del panel
       for b in botones_columna:
