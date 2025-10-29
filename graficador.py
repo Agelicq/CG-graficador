@@ -1,8 +1,20 @@
+"""Interfaz gráfica del graficador.
+
+Este módulo proporciona una interfaz basada en Pygame que muestra
+paneles de herramientas y colores, botones con iconos opcionales y un
+área de dibujo (lienzo). Las rutinas de rasterización y primitivas se
+encuentran en el módulo `figuras` y son invocadas desde la lógica de
+herramientas cuando el usuario completa la selección de puntos.
+
+El archivo está organizado como un script ejecutable. Ejecutar el
+archivo abrirá una ventana Pygame con los controles y un lienzo.
+"""
+
 import pygame
 import os
-import math  
+import math
 import numpy as np
-import figuras as f # Importar los algoritmos desde figuras.py
+import figuras as f  # Importar los algoritmos desde figuras.py
 
 pygame.init()
 
@@ -20,8 +32,37 @@ COLOR_BLANCO = (255, 255, 255)
 COLOR_NEGRO = (0, 0, 0)
 # Clase Boton
 class Boton:
-    def __init__(self, x, y, ancho, alto, texto, color_normal, color_hover, color_texto=(0, 0, 0), fuente=None, icon_surface=None):
-        """Botón simple que puede mostrar texto o una Surface (icon_surface) centrada dentro."""
+    """Representa un botón rectangular con texto o icono centrado.
+
+    El botón detecta el estado hover y puede devolver True cuando se
+    hace clic en él mediante el método `actualizar`.
+    """
+
+    def __init__(
+        self,
+        x,
+        y,
+        ancho,
+        alto,
+        texto,
+        color_normal,
+        color_hover,
+        color_texto=(0, 0, 0),
+        fuente=None,
+        icon_surface=None,
+    ):
+        """Inicializa un nuevo botón.
+
+        Args:
+            x, y: Coordenadas de la esquina superior izquierda.
+            ancho, alto: Dimensiones del botón.
+            texto: Texto a mostrar (si no hay icono).
+            color_normal: Color de fondo en reposo.
+            color_hover: Color de fondo cuando el cursor está encima.
+            color_texto: Color del texto.
+            fuente: Objeto pygame.font.Font opcional.
+            icon_surface: Surface opcional que se dibuja centrada.
+        """
         self.rect = pygame.Rect(x, y, ancho, alto)
         self.texto = texto
         self.color_normal = color_normal
